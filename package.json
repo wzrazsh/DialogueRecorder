@@ -1,0 +1,92 @@
+{
+  "name": "dialogue-recorder",
+  "displayName": "Dialogue Recorder",
+  "description": "记录与Builder、Chat的对话内容以及文件修改历史",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/dialogue-recorder"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dialogue-recorder.showPanel",
+        "title": "显示对话记录器面板",
+        "category": "Dialogue Recorder"
+      },
+      {
+        "command": "dialogue-recorder.showWeb",
+        "title": "在浏览器中打开对话记录器",
+        "category": "Dialogue Recorder"
+      },
+      {
+        "command": "dialogue-recorder.quickSearch",
+        "title": "快速搜索对话记录",
+        "category": "Dialogue Recorder"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "dialogue-recorder.showPanel",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d"
+      },
+      {
+        "command": "dialogue-recorder.quickSearch",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "dialogue-recorder-view",
+          "name": "对话记录器",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "dialogue-recorder-view",
+        "contents": "欢迎使用对话记录器！\n[打开面板](command:dialogue-recorder.showPanel)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "16.x",
+    "@types/sqlite3": "^3.1.9",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "lunr": "^2.3.9",
+    "sqlite3": "^5.1.6"
+  }
+}

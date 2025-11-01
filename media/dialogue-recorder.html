@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>对话记录器</title>
+    <style>
+        :root {
+            --border-radius: 6px;
+            --transition-speed: 0.2s;
+            --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .header {
+            padding: 15px 20px;
+            background-color: var(--vscode-titleBar-activeBackground);
+            border-bottom: 1px solid var(--vscode-panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--vscode-titleBar-activeForeground);
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-badge {
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .search-panel {
+            padding: 15px 20px;
+            background-color: var(--vscode-panel-background);
+            border-bottom: 1px solid var(--vscode-panel-border);
+            box-shadow: var(--shadow-light);
+        }
+
+        .search-input-container {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 40px 10px 12px;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: all var(--transition-speed);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+            box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--vscode-input-placeholderForeground);
+            pointer-events: none;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            padding: 6px 8px;
+            background-color: var(--vscode-dropdown-background);
+            color: var(--vscode-dropdown-foreground);
+            border: 1px solid var(--vscode-dropdown-border);
+            border-radius: var(--border-radius);
+            min-width: 120px;
+            font-size: 12px;
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .search-button {
+            padding: 6px 12px;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color var(--transition-speed);
+        }
+
+        .search-button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .search-button.secondary {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        .search-button.secondary:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .records-panel {
+            flex: 1;
+            overflow-y: auto;
+            background-color: var(--vscode-panel-background);
+        }
+
+        .records-header {
+            padding: 10px 20px;
+            background-color: var(--vscode-panelSectionHeader-background);
+            border-bottom: 1px solid var(--vscode-panel-border);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--vscode-panelTitle-activeForeground);
+        }
+
+        .records-list {
+            padding: 0;
+        }
+
+        .record-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            position: relative;
+        }
+
+        .record-item:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+
+        .record-item.selected {
+            background-color: var(--vscode-list-activeSelectionBackground);
+            color: var(--vscode-list-activeSelectionForeground);
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--vscode-icon-foreground);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            background-color: var(--vscode-toolbar-hoverBackground);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
+        .record-item.selected::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: var(--vscode-focusBorder);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .record-speaker {
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .speaker-user { background-color: var(--vscode-charts-blue); color: white; }
+        .speaker-builder { background-color: var(--vscode-charts-green); color: white; }
+        .speaker-chat { background-color: var(--vscode-charts-orange); color: white; }
+
+        .record-time {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            opacity: 0.8;
+        }
+
+        .record-content {
+            font-size: 13px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            margin-bottom: 4px;
+        }
+
+        .record-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .record-file {
+            color: var(--vscode-textLink-foreground);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .record-type {
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .detail-panel {
+            width: 40%;
+            min-width: 300px;
+            background-color: var(--vscode-panel-background);
+            border-left: 1px solid var(--vscode-panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-header {
+            padding: 15px 20px;
+            background-color: var(--vscode-panelSectionHeader-background);
+            border-bottom: 1px solid var(--vscode-panel-border);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--vscode-panelTitle-activeForeground);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .detail-action {
+            padding: 4px 8px;
+            background: none;
+            border: 1px solid var(--vscode-button-border);
+            border-radius: 3px;
+            color: var(--vscode-button-foreground);
+            cursor: pointer;
+            font-size: 11px;
+            transition: all var(--transition-speed);
+        }
+
+        .detail-action:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .detail-content {
+            flex: 1;
+            padding: 15px 20px;
+            overflow-y: auto;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--vscode-foreground);
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .detail-item label {
+            font-weight: 600;
+            min-width: 80px;
+            margin-right: 10px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .detail-item span {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .detail-item.full-width {
+            flex-direction: column;
+        }
+
+        .detail-item.full-width label {
+            margin-bottom: 5px;
+        }
+
+        .detail-item pre {
+            margin: 0;
+            padding: 8px;
+            background-color: var(--vscode-textCodeBlock-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 3px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .detail-section {
+            margin: 15px 0;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .detail-section-title {
+            background-color: var(--vscode-panel-background);
+            padding: 8px 12px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            color: var(--vscode-foreground);
+        }
+
+        .detail-section-content {
+            padding: 12px;
+            background-color: var(--vscode-editor-background);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .detail-header h3 {
+            margin: 0;
+            color: var(--vscode-foreground);
+        }
+
+        .detail-header .copy-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+        }
+
+        .detail-section {
+            margin-bottom: 15px;
+        }
+
+        .detail-section-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--vscode-foreground);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-section-content {
+            background-color: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .no-records {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .no-records-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.3;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--vscode-input-border);
+            border-top: 2px solid var(--vscode-progressBar-background);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--vscode-descriptionForeground);
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .empty-state-subtext {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            background-color: var(--vscode-notifications-background);
+            color: var(--vscode-notifications-foreground);
+            border: 1px solid var(--vscode-notifications-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            z-index: 1000;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification.info {
+            border-left: 4px solid var(--vscode-notificationsInfoIcon-foreground);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--vscode-notificationsSuccessIcon-foreground);
+        }
+
+        .notification.warning {
+            border-left: 4px solid var(--vscode-notificationsWarningIcon-foreground);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--vscode-notificationsErrorIcon-foreground);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">对话记录器</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>总记录:</span>
+                    <span class="stat-badge" id="totalRecords">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>今日:</span>
+                    <span class="stat-badge" id="todayRecords">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>会话:</span>
+                    <span class="stat-badge" id="sessionCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-panel">
+            <div class="search-input-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索对话记录...">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="search-filters">
+                <div class="filter-group">
+                    <span class="filter-label">发言者:</span>
+                    <select class="filter-select" id="speakerFilter">
+                        <option value="">全部</option>
+                        <option value="USER">用户</option>
+                        <option value="BUILDER">Builder</option>
+                        <option value="CHAT">Chat</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">类型:</span>
+                    <select class="filter-select" id="typeFilter">
+                        <option value="">全部</option>
+                        <option value="DIALOGUE">对话</option>
+                        <option value="FILE_MODIFICATION">文件修改</option>
+                        <option value="UNDO">撤销操作</option>
+                        <option value="REDO">重做操作</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">开始:</span>
+                    <input type="date" class="filter-select" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">结束:</span>
+                    <input type="date" class="filter-select" id="endDate">
+                </div>
+                <div class="search-buttons">
+                    <button class="search-button" id="searchButton">搜索</button>
+                    <button class="search-button secondary" id="clearButton">清除</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="records-panel">
+                <div class="records-header">
+                    对话记录
+                </div>
+                <div class="records-list" id="recordsList">
+                    <div class="no-records" id="noRecords">
+                        <div class="no-records-icon">📝</div>
+                        <div>暂无对话记录</div>
+                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">开始对话后记录将显示在这里</div>
+                    </div>
+                    <div class="loading" id="loading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <div>加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-panel" id="detailPanel" style="display: none;">
+                <div class="detail-header">
+                    <span>详细信息</span>
+                    <div class="detail-actions">
+                        <button class="detail-action" id="copyButton">复制</button>
+                        <button class="detail-action" id="exportButton">导出</button>
+                    </div>
+                </div>
+                <div class="detail-content" id="detailContent">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">选择一条记录查看详情</div>
+                        <div class="empty-state-subtext">点击左侧的记录以查看完整信息</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+
+        // DOM元素
+        const searchInput = document.getElementById('searchInput');
+        const speakerFilter = document.getElementById('speakerFilter');
+        const typeFilter = document.getElementById('typeFilter');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const searchButton = document.getElementById('searchButton');
+        const clearButton = document.getElementById('clearButton');
+        const copyButton = document.getElementById('copyButton');
+        const exportButton = document.getElementById('exportButton');
+        const recordsPanel = document.getElementById('recordsList');
+        const recordsList = document.getElementById('recordsList');
+        const noRecords = document.getElementById('noRecords');
+        const loading = document.getElementById('loading');
+        const detailPanel = document.getElementById('detailPanel');
+        const detailContent = document.getElementById('detailContent');
+        const totalRecords = document.getElementById('totalRecords');
+        const todayRecords = document.getElementById('todayRecords');
+        const sessionCount = document.getElementById('sessionCount');
+
+        let currentRecords = [];
+        let selectedRecord = null;
+        let currentSessionId = null;
+
+        // 事件监听
+        searchButton.addEventListener('click', performSearch);
+        clearButton.addEventListener('click', clearSearch);
+        copyButton.addEventListener('click', () => {
+            if (selectedRecord) {
+                copyRecordContent(selectedRecord);
+            } else {
+                showNotification('请先选择一条记录');
+            }
+        });
+        exportButton.addEventListener('click', exportRecords);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // 初始化
+        window.addEventListener('load', () => {
+            loadRecords();
+        });
+
+        // 监听来自扩展的消息
+        window.addEventListener('message', event => {
+            const message = event.data;
+            console.log('Webview: 收到来自扩展的消息:', message.type);
+            
+            switch (message.type) {
+                case 'recordsLoaded':
+                    console.log('Webview: 收到recordsLoaded消息，记录数量:', message.records ? message.records.length : 0);
+                    hideLoading();
+                    displayRecords(message.records);
+                    break;
+                case 'searchResults':
+                    console.log('Webview: 收到searchResults消息，记录数量:', message.results ? message.results.length : 0);
+                    hideLoading();
+                    displayRecords(message.results);
+                    break;
+                case 'newRecord':
+                    console.log('Webview: 收到newRecord消息');
+                    addNewRecord(message.record);
+                    break;
+                case 'error':
+                    console.log('Webview: 收到错误消息:', message.text);
+                    hideLoading();
+                    showNotification(message.text, 'error');
+                    break;
+                default:
+                    console.log('Webview: 收到未知类型的消息:', message.type);
+            }
+        });
+
+        function performSearch() {
+            const keyword = searchInput.value.trim();
+            const speaker = speakerFilter.value;
+            const type = typeFilter.value;
+            const start = startDate.value;
+            const end = endDate.value;
+
+            showLoading();
+            
+            vscode.postMessage({
+                type: 'search',
+                keyword: keyword,
+                speaker: speaker,
+                recordType: type,
+                startTime: start ? new Date(start) : null,
+                endTime: end ? new Date(end) : null
+            });
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            speakerFilter.value = '';
+            typeFilter.value = '';
+            startDate.value = '';
+            endDate.value = '';
+            loadRecords();
+        }
+
+        function loadRecords() {
+            console.log('Webview: 开始加载记录');
+            showLoading();
+            vscode.postMessage({ type: 'loadRecords' });
+            console.log('Webview: 已发送loadRecords命令到扩展');
+        }
+
+        function showLoading() {
+            noRecords.style.display = 'none';
+            loading.style.display = 'block';
+            recordsList.innerHTML = '';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        function displayRecords(records) {
+            loading.style.display = 'none';
+            recordsList.innerHTML = '';
+            currentRecords = records || [];
+
+            if (currentRecords.length === 0) {
+                recordsList.style.display = 'none';
+                noRecords.style.display = 'block';
+                detailPanel.style.display = 'none';
+                return;
+            }
+
+            recordsList.style.display = 'block';
+            noRecords.style.display = 'none';
+
+            currentRecords.forEach((record, index) => {
+                const recordElement = createRecordElement(record, index);
+                recordsList.appendChild(recordElement);
+            });
+            
+            updateStatistics(currentRecords);
+        }
+
+        function createRecordElement(record, index) {
+            const div = document.createElement('div');
+            div.className = 'record-item';
+            if (selectedRecord && selectedRecord.id === record.id) {
+                div.classList.add('selected');
+            }
+
+            const timeString = new Date(record.timestamp).toLocaleString('zh-CN');
+            
+            div.innerHTML = `
+                <div class="record-header">
+                    <span class="record-speaker speaker-${record.speaker.toLowerCase()}">${getSpeakerDisplayName(record.speaker)}</span>
+                    <span class="record-time">${timeString}</span>
+                    <button class="copy-btn" onclick="event.stopPropagation(); copyRecordContent(${JSON.stringify(record).replace(/"/g, '&quot;')})">
+                        <span class="codicon codicon-copy"></span>
+                    </button>
+                </div>
+                <div class="record-content">${escapeHtml(record.content.substring(0, 100))}${record.content.length > 100 ? '...' : ''}</div>
+            `;
+
+            div.addEventListener('click', () => {
+                selectRecord(record, index);
+            });
+
+            return div;
+        }
+
+        function selectRecord(record, index) {
+            // 移除之前选中的样式
+            document.querySelectorAll('.record-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // 添加当前选中的样式
+            document.querySelectorAll('.record-item')[index].classList.add('selected');
+            
+            selectedRecord = record;
+            showDetail(record);
+        }
+
+        function showDetail(record) {
+            detailPanel.style.display = 'block';
+            
+            const timeString = new Date(record.timestamp).toLocaleString();
+            
+            // 构建详细信息HTML
+            let detailHtml = `
+                <div class="detail-header">
+                    <h3>记录详情</h3>
+                    <button class="copy-btn" onclick="copyRecordContent(${JSON.stringify(record).replace(/"/g, '&quot;')})">
+                        <span class="codicon codicon-copy"></span> 复制
+                    </button>
+                </div>
+                <div class="detail-content">
+                    <div class="detail-item">
+                        <label>记录ID:</label>
+                        <span>${record.id}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>会话ID:</label>
+                        <span>${record.sessionId}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>类型:</label>
+                        <span>${formatRecordType(record.recordType)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>发言者:</label>
+                        <span>${formatSpeakerName(record.speaker)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>时间:</label>
+                        <span>${timeString}</span>
+                    </div>`;
+
+            // 如果是文件修改类型，显示文件相关信息
+            if (record.filePath) {
+                detailHtml += `
+                    <div class="detail-item">
+                        <label>文件路径:</label>
+                        <span>${escapeHtml(record.filePath)}</span>
+                    </div>`;
+            }
+
+            if (record.modificationType) {
+                detailHtml += `
+                    <div class="detail-item">
+                        <label>修改类型:</label>
+                        <span>${formatModificationType(record.modificationType)}</span>
+                    </div>`;
+            }
+
+            // 显示主要内容
+            detailHtml += `
+                    <div class="detail-section">
+                        <div class="detail-section-title">内容</div>
+                        <div class="detail-section-content">${escapeHtml(record.content)}</div>
+                    </div>`;
+
+            // 如果是文件修改，显示旧内容和新内容的对比
+            if (record.oldContent || record.newContent) {
+                detailHtml += `
+                    <div class="detail-section">
+                        <div class="detail-section-title">修改详情</div>`;
+                
+                if (record.oldContent) {
+                    detailHtml += `
+                        <div class="detail-item">
+                            <label>旧内容:</label>
+                            <pre>${escapeHtml(record.oldContent)}</pre>
+                        </div>`;
+                }
+                
+                if (record.newContent) {
+                    detailHtml += `
+                        <div class="detail-item">
+                            <label>新内容:</label>
+                            <pre>${escapeHtml(record.newContent)}</pre>
+                        </div>`;
+                }
+                
+                detailHtml += `
+                    </div>`;
+            }
+
+            // 显示操作详情
+            if (record.operationDetails) {
+                detailHtml += `
+                    <div class="detail-section">
+                        <div class="detail-section-title">操作详情</div>
+                        <div class="detail-section-content">${escapeHtml(record.operationDetails)}</div>
+                    </div>`;
+            }
+
+            detailHtml += `
+                </div>`;
+            
+            detailContent.innerHTML = detailHtml;
+        }
+
+        function addNewRecord(record) {
+            if (noRecords.style.display !== 'none') {
+                noRecords.style.display = 'none';
+            }
+            
+            const recordElement = createRecordElement(record, currentRecords.length);
+            recordsList.insertBefore(recordElement, recordsList.firstChild);
+            currentRecords.unshift(record);
+        }
+
+        function getSpeakerDisplayName(speaker) {
+            switch (speaker) {
+                case 'USER': return '用户';
+                case 'BUILDER': return 'Builder';
+                case 'CHAT': return 'Chat';
+                default: return speaker;
+            }
+        }
+
+        function formatRecordType(recordType) {
+            switch (recordType) {
+                case 'DIALOGUE': return '对话';
+                case 'FILE_MODIFICATION': return '文件修改';
+                case 'UNDO': return '撤销操作';
+                case 'REDO': return '重做操作';
+                default: return recordType;
+            }
+        }
+
+        function formatModificationType(modificationType) {
+            switch (modificationType) {
+                case 'CREATE': return '创建文件';
+                case 'UPDATE': return '更新文件';
+                case 'DELETE': return '删除文件';
+                case 'RENAME': return '重命名文件';
+                default: return modificationType;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 更新统计信息
+        function updateStatistics(records) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayCount = records.filter(record => record.timestamp.startsWith(today)).length;
+            const sessions = [...new Set(records.map(record => record.sessionId))];
+            
+            totalRecords.textContent = records.length;
+            todayRecords.textContent = todayCount;
+            sessionCount.textContent = sessions.length;
+        }
+
+        // 复制记录内容
+        function copyRecordContent(record) {
+            const content = `记录类型: ${formatRecordType(record.recordType)}
+发言者: ${formatSpeakerName(record.speaker)}
+时间: ${new Date(record.timestamp).toLocaleString()}
+内容: ${record.content}`;
+            
+            navigator.clipboard.writeText(content).then(() => {
+                showNotification('记录已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showNotification('复制失败，请重试');
+            });
+        }
+
+        // 导出记录
+        function exportRecords() {
+            if (currentRecords.length === 0) {
+                showNotification('没有记录可导出');
+                return;
+            }
+            
+            vscode.postMessage({
+                command: 'exportRecords',
+                records: currentRecords
+            });
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
