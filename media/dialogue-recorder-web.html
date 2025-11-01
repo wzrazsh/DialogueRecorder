@@ -414,9 +414,6 @@
                     <select class="filter-select" id="typeFilter">
                         <option value="">全部</option>
                         <option value="DIALOGUE">对话</option>
-                        <option value="FILE_MODIFICATION">文件修改</option>
-                        <option value="UNDO">撤销操作</option>
-                        <option value="REDO">重做操作</option>
                     </select>
                 </div>
             </div>
@@ -649,7 +646,6 @@
                 <div class="record-content">${escapeHtml(record.content)}</div>
                 <div class="record-meta">
                     <span class="record-type">${formatRecordType(record.recordType)}</span>
-                    ${record.filePath ? `<span> • 文件: ${record.filePath}</span>` : ''}
                 </div>
             `;
             
@@ -682,8 +678,7 @@
             // 按关键词搜索
             if (query) {
                 filteredRecords = filteredRecords.filter(r => 
-                    r.content.toLowerCase().includes(query) ||
-                    (r.filePath && r.filePath.toLowerCase().includes(query))
+                    r.content.toLowerCase().includes(query)
                 );
             }
             
@@ -738,9 +733,6 @@
         function formatRecordType(recordType) {
             switch (recordType) {
                 case 'DIALOGUE': return '对话';
-                case 'FILE_MODIFICATION': return '文件修改';
-                case 'UNDO': return '撤销操作';
-                case 'REDO': return '重做操作';
                 default: return recordType;
             }
         }

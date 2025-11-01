@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as sqlite3 from 'sqlite3';
 import * as path from 'path';
 import * as fs from 'fs';
-import { DialogueRecord } from '../models/DialogueRecord';
+import { DialogueRecord, SessionGroup, SessionDetail } from '../models/DialogueRecord';
 
 export class DatabaseService {
     private db: sqlite3.Database | null = null;
@@ -70,12 +70,7 @@ export class DatabaseService {
                             timestamp DATETIME NOT NULL,
                             speaker TEXT NOT NULL,
                             content TEXT NOT NULL,
-                            record_type TEXT NOT NULL,
-                            file_path TEXT,
-                            modification_type TEXT,
-                            old_content TEXT,
-                            new_content TEXT,
-                            operation_details TEXT
+                            record_type TEXT NOT NULL
                         )
                     `, (err) => {
                         if (err) {
@@ -105,20 +100,15 @@ export class DatabaseService {
         return new Promise((resolve, reject) => {
             this.db!.run(`
                 INSERT INTO dialogue_records 
-                (id, session_id, timestamp, speaker, content, record_type, file_path, modification_type, old_content, new_content, operation_details)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, session_id, timestamp, speaker, content, record_type)
+                VALUES (?, ?, ?, ?, ?, ?)
             `, [
                 record.id,
                 record.sessionId,
                 record.timestamp.toISOString(),
                 record.speaker,
                 record.content,
-                record.recordType,
-                record.filePath || null,
-                record.modificationType || null,
-                record.oldContent || null,
-                record.newContent || null,
-                record.operationDetails || null
+                record.recordType
             ], function(err) {
                 if (err) {
                     reject(err);
@@ -164,12 +154,7 @@ export class DatabaseService {
                     timestamp: new Date(row.timestamp),
                     speaker: row.speaker,
                     content: row.content,
-                    recordType: row.record_type,
-                    filePath: row.file_path,
-                    modificationType: row.modification_type,
-                    oldContent: row.old_content,
-                    newContent: row.new_content,
-                    operationDetails: row.operation_details
+                    recordType: row.record_type
                 }));
                 
                 console.log(`DatabaseService: 会话 ${sessionId} 记录获取完成`);
@@ -217,12 +202,7 @@ export class DatabaseService {
                     timestamp: new Date(row.timestamp),
                     speaker: row.speaker,
                     content: row.content,
-                    recordType: row.record_type,
-                    filePath: row.file_path,
-                    modificationType: row.modification_type,
-                    oldContent: row.old_content,
-                    newContent: row.new_content,
-                    operationDetails: row.operation_details
+                    recordType: row.record_type
                 }));
                 
                 resolve(records);
@@ -266,6 +246,136 @@ export class DatabaseService {
                 resolve(sessions);
             });
         });
+    }
+
+    async getSessionGroups(): Promise<SessionGroup[]> {
+        console.log('DatabaseService: 开始获取会话分组');
+        
+        if (!this.db) {
+            // 等待数据库初始化完成
+            if (this.initializationPromise) {
+                await this.initializationPromise;
+            }
+            if (!this.db) {
+                console.error('DatabaseService: 数据库未初始化');
+                throw new Error('Database not initialized');
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            console.log('DatabaseService: 执行SQL查询获取会话分组');
+            this.db!.all(`
+                SELECT 
+                    session_id as sessionId,
+                    COUNT(*) as recordCount,
+                    MIN(timestamp) as firstTimestamp,
+                    MAX(timestamp) as lastTimestamp,
+                    GROUP_CONCAT(DISTINCT speaker) as speakers
+                FROM dialogue_records 
+                GROUP BY session_id 
+                ORDER BY MAX(timestamp) DESC
+            `, [], (err, rows: any[]) => {
+                if (err) {
+                    console.error('DatabaseService: 获取会话分组失败:', err);
+                    reject(err);
+                    return;
+                }
+                
+                const sessionGroups: SessionGroup[] = rows.map((row: any) => ({
+                    sessionId: row.sessionId,
+                    sessionName: `会话 ${row.sessionId.substring(0, 8)}...`,
+                    recordCount: row.recordCount,
+                    firstTimestamp: row.firstTimestamp,
+                    lastTimestamp: row.lastTimestamp,
+                    speakers: row.speakers ? row.speakers.split(',') : [],
+                    isExpanded: false
+                }));
+                console.log(`DatabaseService: 获取到 ${sessionGroups.length} 个会话分组`);
+                resolve(sessionGroups);
+            });
+        });
+    }
+
+    async getSessionDetail(sessionId: string): Promise<SessionDetail> {
+        console.log(`DatabaseService: 开始获取会话详情: ${sessionId}`);
+        
+        if (!this.db) {
+            // 等待数据库初始化完成
+            if (this.initializationPromise) {
+                await this.initializationPromise;
+            }
+            if (!this.db) {
+                console.error('DatabaseService: 数据库未初始化');
+                throw new Error('Database not initialized');
+            }
+        }
+
+        return new Promise(async (resolve, reject) => {
+            try {
+                // 获取会话的基本信息
+                const sessionInfo = await new Promise<any>((resolveInfo, rejectInfo) => {
+                    this.db!.get(`
+                        SELECT 
+                            session_id as sessionId,
+                            COUNT(*) as totalRecords,
+                            MIN(timestamp) as startTime,
+                            MAX(timestamp) as endTime,
+                            GROUP_CONCAT(DISTINCT speaker) as speakers
+                        FROM dialogue_records 
+                        WHERE session_id = ?
+                        GROUP BY session_id
+                    `, [sessionId], (err, row) => {
+                        if (err) {
+                            console.error('DatabaseService: 获取会话基本信息失败:', err);
+                            rejectInfo(err);
+                        } else {
+                            resolveInfo(row);
+                        }
+                    });
+                });
+
+                // 获取会话的所有记录
+                const records = await this.getRecordsBySession(sessionId);
+
+                // 计算持续时间
+                const startTime = new Date(sessionInfo.startTime);
+                const endTime = new Date(sessionInfo.endTime);
+                const durationMs = endTime.getTime() - startTime.getTime();
+                const duration = this.formatDuration(durationMs);
+
+                const sessionDetail: SessionDetail = {
+                    sessionId: sessionInfo.sessionId,
+                    sessionName: `会话 ${sessionId.substring(0, 8)}...`,
+                    records: records,
+                    totalRecords: sessionInfo.totalRecords,
+                    duration: duration,
+                    speakers: sessionInfo.speakers ? sessionInfo.speakers.split(',') : [],
+                    startTime: sessionInfo.startTime,
+                    endTime: sessionInfo.endTime
+                };
+
+                console.log(`DatabaseService: 会话详情获取完成: ${sessionId}, 包含 ${records.length} 条记录`);
+                resolve(sessionDetail);
+
+            } catch (error) {
+                console.error('DatabaseService: 获取会话详情失败:', error);
+                reject(error);
+            }
+        });
+    }
+
+    private formatDuration(ms: number): string {
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (hours > 0) {
+            return `${hours}小时${minutes % 60}分钟`;
+        } else if (minutes > 0) {
+            return `${minutes}分钟${seconds % 60}秒`;
+        } else {
+            return `${seconds}秒`;
+        }
     }
 
     async close(): Promise<void> {

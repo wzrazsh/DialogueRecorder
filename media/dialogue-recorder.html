@@ -67,6 +67,25 @@
             font-weight: 500;
         }
 
+        .reset-button {
+            padding: 4px 8px;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: 1px solid var(--vscode-button-border);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all var(--transition-speed);
+        }
+
+        .reset-button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .reset-button:active {
+            transform: scale(0.95);
+        }
+
         .search-panel {
             padding: 15px 20px;
             background-color: var(--vscode-panel-background);
@@ -169,6 +188,252 @@
             flex: 1;
             overflow: hidden;
             gap: 0;
+        }
+
+        .sessions-panel {
+            width: 300px;
+            background-color: var(--vscode-sideBar-background);
+            border-right: 1px solid var(--vscode-panel-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sessions-header {
+            padding: 15px 20px;
+            background-color: var(--vscode-panelSectionHeader-background);
+            border-bottom: 1px solid var(--vscode-panel-border);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--vscode-panelTitle-activeForeground);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .session-group {
+            border-bottom: 1px solid var(--vscode-panel-border);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .session-group:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+
+        .session-group.active {
+            background-color: var(--vscode-list-activeSelectionBackground);
+            color: var(--vscode-list-activeSelectionForeground);
+        }
+
+        .session-header {
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 确认对话框样式 */
+        .confirm-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .confirm-dialog-overlay.show {
+            opacity: 1;
+        }
+
+        .confirm-dialog {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .confirm-dialog-overlay.show .confirm-dialog {
+            transform: scale(1);
+        }
+
+        .confirm-dialog-content {
+            padding: 20px;
+        }
+
+        .confirm-dialog-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--vscode-foreground);
+        }
+
+        .confirm-dialog-content p {
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .confirm-dialog-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .confirm-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .confirm-dialog-ok {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .confirm-dialog-ok:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .confirm-dialog-cancel {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        .confirm-dialog-cancel:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .session-edit-btn {
+            background: none;
+            border: none;
+            color: var(--vscode-icon-foreground);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+
+        .session-edit-btn:hover {
+            opacity: 1;
+            background-color: var(--vscode-inputOption-activeBackground);
+            color: var(--vscode-inputOption-activeForeground);
+        }
+
+        .session-edit-btn:active {
+            transform: scale(0.95);
+        }
+
+        .session-delete-btn {
+            background: none;
+            border: none;
+            color: var(--vscode-icon-foreground);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+
+        .session-delete-btn:hover {
+            opacity: 1;
+            background-color: var(--vscode-inputValidation-errorBackground);
+            color: var(--vscode-inputValidation-errorForeground);
+        }
+
+        .session-delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        .session-name-input {
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            color: var(--vscode-input-foreground);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .session-name-input:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .session-name {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .session-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .session-count {
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .session-expand {
+            color: var(--vscode-icon-foreground);
+            transition: transform var(--transition-speed);
+        }
+
+        .session-expand.expanded {
+            transform: rotate(90deg);
+        }
+
+        .session-records {
+            background-color: var(--vscode-list-activeSelectionBackground);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed);
+        }
+
+        .session-records.expanded {
+            max-height: 400px;
         }
 
         .records-panel {
@@ -574,6 +839,9 @@
                     <span>会话:</span>
                     <span class="stat-badge" id="sessionCount">0</span>
                 </div>
+                <div class="stat-item">
+                    <button class="reset-button" id="resetDataButton" title="重置所有数据">重置数据</button>
+                </div>
             </div>
         </div>
 
@@ -597,9 +865,6 @@
                     <select class="filter-select" id="typeFilter">
                         <option value="">全部</option>
                         <option value="DIALOGUE">对话</option>
-                        <option value="FILE_MODIFICATION">文件修改</option>
-                        <option value="UNDO">撤销操作</option>
-                        <option value="REDO">重做操作</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -618,15 +883,36 @@
         </div>
 
         <div class="content-area">
+            <div class="sessions-panel">
+                <div class="sessions-header">
+                    <span>会话列表</span>
+                    <span class="session-count" id="sessionCountBadge">0</span>
+                </div>
+                <div class="sessions-list" id="sessionsList">
+                    <div class="no-records" id="noSessions">
+                        <div class="no-records-icon">💬</div>
+                        <div>暂无会话</div>
+                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">开始对话后会话将显示在这里</div>
+                    </div>
+                    <div class="loading" id="sessionsLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <div>加载中...</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="records-panel">
                 <div class="records-header">
-                    对话记录
+                    <span id="sessionTitle">对话记录</span>
+                    <div class="session-actions" style="display: none;" id="sessionActions">
+                        <button class="detail-action" id="exportSessionButton">导出会话</button>
+                    </div>
                 </div>
                 <div class="records-list" id="recordsList">
                     <div class="no-records" id="noRecords">
                         <div class="no-records-icon">📝</div>
-                        <div>暂无对话记录</div>
-                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">开始对话后记录将显示在这里</div>
+                        <div>选择会话查看记录</div>
+                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">点击左侧的会话以查看对话记录</div>
                     </div>
                     <div class="loading" id="loading" style="display: none;">
                         <div class="loading-spinner"></div>
@@ -667,19 +953,29 @@
         const clearButton = document.getElementById('clearButton');
         const copyButton = document.getElementById('copyButton');
         const exportButton = document.getElementById('exportButton');
+        const exportSessionButton = document.getElementById('exportSessionButton');
         const recordsPanel = document.getElementById('recordsList');
         const recordsList = document.getElementById('recordsList');
         const noRecords = document.getElementById('noRecords');
+        const noSessions = document.getElementById('noSessions');
         const loading = document.getElementById('loading');
+        const sessionsLoading = document.getElementById('sessionsLoading');
         const detailPanel = document.getElementById('detailPanel');
         const detailContent = document.getElementById('detailContent');
         const totalRecords = document.getElementById('totalRecords');
         const todayRecords = document.getElementById('todayRecords');
         const sessionCount = document.getElementById('sessionCount');
+        const sessionCountBadge = document.getElementById('sessionCountBadge');
+        const sessionTitle = document.getElementById('sessionTitle');
+        const sessionActions = document.getElementById('sessionActions');
+        const sessionsList = document.getElementById('sessionsList');
+        const resetDataButton = document.getElementById('resetDataButton');
 
         let currentRecords = [];
+        let currentSessions = [];
         let selectedRecord = null;
         let currentSessionId = null;
+        let currentSessionDetail = null;
 
         // 事件监听
         searchButton.addEventListener('click', performSearch);
@@ -692,6 +988,8 @@
             }
         });
         exportButton.addEventListener('click', exportRecords);
+        exportSessionButton.addEventListener('click', exportCurrentSession);
+        resetDataButton.addEventListener('click', resetData);
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 performSearch();
@@ -709,6 +1007,16 @@
             console.log('Webview: 收到来自扩展的消息:', message.type);
             
             switch (message.type) {
+                case 'sessionGroupsLoaded':
+                    console.log('Webview: 收到sessionGroupsLoaded消息，会话数量:', message.sessionGroups ? message.sessionGroups.length : 0);
+                    hideSessionsLoading();
+                    displaySessionGroups(message.sessionGroups);
+                    break;
+                case 'sessionRecordsLoaded':
+                    console.log('Webview: 收到sessionRecordsLoaded消息，记录数量:', message.records ? message.records.length : 0);
+                    hideLoading();
+                    displaySessionRecords(message.records, message.sessionDetail);
+                    break;
                 case 'recordsLoaded':
                     console.log('Webview: 收到recordsLoaded消息，记录数量:', message.records ? message.records.length : 0);
                     hideLoading();
@@ -726,6 +1034,7 @@
                 case 'error':
                     console.log('Webview: 收到错误消息:', message.text);
                     hideLoading();
+                    hideSessionsLoading();
                     showNotification(message.text, 'error');
                     break;
                 default:
@@ -762,10 +1071,20 @@
         }
 
         function loadRecords() {
-            console.log('Webview: 开始加载记录');
-            showLoading();
+            console.log('Webview: 开始加载会话分组');
+            showSessionsLoading();
             vscode.postMessage({ type: 'loadRecords' });
             console.log('Webview: 已发送loadRecords命令到扩展');
+        }
+
+        function loadSessionRecords(sessionId) {
+            console.log('Webview: 开始加载会话记录，会话ID:', sessionId);
+            showLoading();
+            vscode.postMessage({ 
+                type: 'loadSessionRecords',
+                sessionId: sessionId 
+            });
+            console.log('Webview: 已发送loadSessionRecords命令到扩展');
         }
 
         function showLoading() {
@@ -778,6 +1097,69 @@
             loading.style.display = 'none';
         }
 
+        function showSessionsLoading() {
+            noSessions.style.display = 'none';
+            sessionsLoading.style.display = 'block';
+            sessionsList.innerHTML = '';
+        }
+
+        function hideSessionsLoading() {
+            sessionsLoading.style.display = 'none';
+        }
+
+        function displaySessionGroups(sessionGroups) {
+            sessionsLoading.style.display = 'none';
+            sessionsList.innerHTML = '';
+            currentSessions = sessionGroups || [];
+
+            if (currentSessions.length === 0) {
+                sessionsList.style.display = 'none';
+                noSessions.style.display = 'block';
+                return;
+            }
+
+            sessionsList.style.display = 'block';
+            noSessions.style.display = 'none';
+
+            currentSessions.forEach((session, index) => {
+                const sessionElement = createSessionElement(session, index);
+                sessionsList.appendChild(sessionElement);
+            });
+            
+            updateSessionStatistics(currentSessions);
+        }
+
+        function displaySessionRecords(records, sessionDetail) {
+            loading.style.display = 'none';
+            recordsList.innerHTML = '';
+            currentRecords = records || [];
+            currentSessionDetail = sessionDetail;
+
+            if (currentRecords.length === 0) {
+                recordsList.style.display = 'none';
+                noRecords.style.display = 'block';
+                detailPanel.style.display = 'none';
+                sessionActions.style.display = 'none';
+                return;
+            }
+
+            recordsList.style.display = 'block';
+            noRecords.style.display = 'none';
+            sessionActions.style.display = 'flex';
+
+            // 更新会话标题
+            if (sessionDetail) {
+                sessionTitle.textContent = `${sessionDetail.sessionName || sessionDetail.sessionId} (${sessionDetail.recordCount} 条记录)`;
+            }
+
+            currentRecords.forEach((record, index) => {
+                const recordElement = createRecordElement(record, index);
+                recordsList.appendChild(recordElement);
+            });
+            
+            updateStatistics(currentRecords);
+        }
+
         function displayRecords(records) {
             loading.style.display = 'none';
             recordsList.innerHTML = '';
@@ -787,11 +1169,13 @@
                 recordsList.style.display = 'none';
                 noRecords.style.display = 'block';
                 detailPanel.style.display = 'none';
+                sessionActions.style.display = 'none';
                 return;
             }
 
             recordsList.style.display = 'block';
             noRecords.style.display = 'none';
+            sessionActions.style.display = 'none';
 
             currentRecords.forEach((record, index) => {
                 const recordElement = createRecordElement(record, index);
@@ -799,6 +1183,46 @@
             });
             
             updateStatistics(currentRecords);
+        }
+
+        function createSessionElement(session, index) {
+            const div = document.createElement('div');
+            div.className = 'session-group';
+            div.setAttribute('data-session-id', session.sessionId);
+            if (currentSessionId === session.sessionId) {
+                div.classList.add('active');
+            }
+
+            const timeString = new Date(session.latestTimestamp).toLocaleString('zh-CN');
+            const duration = session.duration ? formatDuration(session.duration) : '未知';
+            
+            div.innerHTML = `
+                <div class="session-header">
+                    <div class="session-info">
+                        <div class="session-name">${session.sessionName || session.sessionId}</div>
+                        <div class="session-meta">
+                            <span>${timeString}</span>
+                            <span class="session-count">${session.recordCount}</span>
+                            <span>${duration}</span>
+                        </div>
+                    </div>
+                    <div class="session-actions">
+                        <button class="session-edit-btn" onclick="event.stopPropagation(); editSessionName('${session.sessionId}')" title="编辑会话名称">
+                            <span class="codicon codicon-edit"></span>
+                        </button>
+                        <button class="session-delete-btn" onclick="event.stopPropagation(); deleteSession('${session.sessionId}')" title="删除会话">
+                            <span class="codicon codicon-trash"></span>
+                        </button>
+                        <span class="session-expand">▶</span>
+                    </div>
+                </div>
+            `;
+
+            div.addEventListener('click', () => {
+                selectSession(session);
+            });
+
+            return div;
         }
 
         function createRecordElement(record, index) {
@@ -828,6 +1252,25 @@
             return div;
         }
 
+        function selectSession(session) {
+            // 移除之前选中的样式
+            document.querySelectorAll('.session-group').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 添加当前选中的样式
+            const sessionElements = document.querySelectorAll('.session-group');
+            for (let i = 0; i < sessionElements.length; i++) {
+                if (sessionElements[i].querySelector('.session-name').textContent === (session.sessionName || session.sessionId)) {
+                    sessionElements[i].classList.add('active');
+                    break;
+                }
+            }
+            
+            currentSessionId = session.sessionId;
+            loadSessionRecords(session.sessionId);
+        }
+
         function selectRecord(record, index) {
             // 移除之前选中的样式
             document.querySelectorAll('.record-item').forEach(item => {
@@ -842,6 +1285,7 @@
         }
 
         function showDetail(record) {
+            console.log('显示记录详情:', record);
             detailPanel.style.display = 'block';
             
             const timeString = new Date(record.timestamp).toLocaleString();
@@ -876,23 +1320,6 @@
                         <span>${timeString}</span>
                     </div>`;
 
-            // 如果是文件修改类型，显示文件相关信息
-            if (record.filePath) {
-                detailHtml += `
-                    <div class="detail-item">
-                        <label>文件路径:</label>
-                        <span>${escapeHtml(record.filePath)}</span>
-                    </div>`;
-            }
-
-            if (record.modificationType) {
-                detailHtml += `
-                    <div class="detail-item">
-                        <label>修改类型:</label>
-                        <span>${formatModificationType(record.modificationType)}</span>
-                    </div>`;
-            }
-
             // 显示主要内容
             detailHtml += `
                     <div class="detail-section">
@@ -900,45 +1327,11 @@
                         <div class="detail-section-content">${escapeHtml(record.content)}</div>
                     </div>`;
 
-            // 如果是文件修改，显示旧内容和新内容的对比
-            if (record.oldContent || record.newContent) {
-                detailHtml += `
-                    <div class="detail-section">
-                        <div class="detail-section-title">修改详情</div>`;
-                
-                if (record.oldContent) {
-                    detailHtml += `
-                        <div class="detail-item">
-                            <label>旧内容:</label>
-                            <pre>${escapeHtml(record.oldContent)}</pre>
-                        </div>`;
-                }
-                
-                if (record.newContent) {
-                    detailHtml += `
-                        <div class="detail-item">
-                            <label>新内容:</label>
-                            <pre>${escapeHtml(record.newContent)}</pre>
-                        </div>`;
-                }
-                
-                detailHtml += `
-                    </div>`;
-            }
-
-            // 显示操作详情
-            if (record.operationDetails) {
-                detailHtml += `
-                    <div class="detail-section">
-                        <div class="detail-section-title">操作详情</div>
-                        <div class="detail-section-content">${escapeHtml(record.operationDetails)}</div>
-                    </div>`;
-            }
-
             detailHtml += `
                 </div>`;
             
             detailContent.innerHTML = detailHtml;
+            console.log('详细信息HTML已设置');
         }
 
         function addNewRecord(record) {
@@ -963,20 +1356,16 @@
         function formatRecordType(recordType) {
             switch (recordType) {
                 case 'DIALOGUE': return '对话';
-                case 'FILE_MODIFICATION': return '文件修改';
-                case 'UNDO': return '撤销操作';
-                case 'REDO': return '重做操作';
                 default: return recordType;
             }
         }
 
-        function formatModificationType(modificationType) {
-            switch (modificationType) {
-                case 'CREATE': return '创建文件';
-                case 'UPDATE': return '更新文件';
-                case 'DELETE': return '删除文件';
-                case 'RENAME': return '重命名文件';
-                default: return modificationType;
+        function formatSpeakerName(speaker) {
+            switch (speaker) {
+                case 'USER': return '用户';
+                case 'BUILDER': return 'Builder';
+                case 'CHAT': return 'Chat';
+                default: return speaker;
             }
         }
 
@@ -998,6 +1387,53 @@
         }
 
         // 复制记录内容
+        function exportCurrentSession() {
+            if (!currentSessionDetail) {
+                showMessage('请先选择一个会话');
+                return;
+            }
+
+            const session = currentSessionDetail.session;
+            const records = currentSessionDetail.records;
+            
+            let exportText = `会话名称: ${session.sessionName || session.sessionId}\n`;
+            exportText += `会话ID: ${session.sessionId}\n`;
+            exportText += `记录数量: ${session.recordCount}\n`;
+            exportText += `开始时间: ${new Date(session.earliestTimestamp).toLocaleString('zh-CN')}\n`;
+            exportText += `结束时间: ${new Date(session.latestTimestamp).toLocaleString('zh-CN')}\n`;
+            exportText += `持续时间: ${session.duration ? formatDuration(session.duration) : '未知'}\n\n`;
+            exportText += '=== 会话记录 ===\n\n';
+
+            records.forEach(record => {
+                exportText += `${getSpeakerDisplayName(record.speaker)} (${new Date(record.timestamp).toLocaleString('zh-CN')}):\n`;
+                exportText += `${record.content}\n\n`;
+            });
+
+            const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `会话_${session.sessionName || session.sessionId}_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showMessage('会话已导出');
+        }
+
+        function formatDuration(seconds) {
+            if (seconds < 60) {
+                return `${seconds}秒`;
+            } else if (seconds < 3600) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${minutes}分${remainingSeconds}秒`;
+            } else {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                return `${hours}小时${minutes}分`;
+            }
+        }
+
         function copyRecordContent(record) {
             const content = `记录类型: ${formatRecordType(record.recordType)}
 发言者: ${formatSpeakerName(record.speaker)}
@@ -1022,6 +1458,193 @@
             vscode.postMessage({
                 command: 'exportRecords',
                 records: currentRecords
+            });
+        }
+
+        // 编辑会话名称
+        function editSessionName(sessionId) {
+            const session = currentSessions.find(s => s.sessionId === sessionId);
+            if (!session) return;
+            
+            const sessionElement = document.querySelector(`.session-group[data-session-id="${sessionId}"]`);
+            if (!sessionElement) return;
+            
+            const sessionNameElement = sessionElement.querySelector('.session-name');
+            const currentName = session.sessionName || session.sessionId;
+            
+            // 创建输入框
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'session-name-input';
+            input.value = currentName;
+            input.maxLength = 50;
+            
+            // 替换显示名称
+            sessionNameElement.innerHTML = '';
+            sessionNameElement.appendChild(input);
+            input.focus();
+            input.select();
+            
+            // 保存函数
+            const saveName = () => {
+                const newName = input.value.trim();
+                if (newName && newName !== currentName) {
+                    // 发送消息到扩展
+                    vscode.postMessage({
+                        type: 'updateSessionName',
+                        sessionId: sessionId,
+                        sessionName: newName
+                    });
+                    
+                    // 更新本地数据
+                    session.sessionName = newName;
+                    
+                    // 更新显示
+                    sessionNameElement.textContent = newName;
+                    
+                    // 如果当前选中的是这个会话，更新标题
+                    if (currentSessionId === sessionId && currentSessionDetail) {
+                        currentSessionDetail.sessionName = newName;
+                        sessionTitle.textContent = `${newName} (${currentSessionDetail.recordCount} 条记录)`;
+                    }
+                    
+                    showNotification('会话名称修改成功');
+                } else {
+                    // 取消编辑
+                    sessionNameElement.textContent = currentName;
+                }
+            };
+            
+            // 回车保存
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveName();
+                } else if (e.key === 'Escape') {
+                    sessionNameElement.textContent = currentName;
+                }
+            });
+            
+            // 失去焦点保存
+            input.addEventListener('blur', saveName);
+        }
+
+        // 显示确认对话框
+        function showConfirmDialog(message, onConfirm, onCancel) {
+            // 创建对话框容器
+            const dialog = document.createElement('div');
+            dialog.className = 'confirm-dialog-overlay';
+            dialog.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-dialog-content">
+                        <h3>确认操作</h3>
+                        <p>${message}</p>
+                        <div class="confirm-dialog-buttons">
+                            <button class="confirm-button confirm-dialog-ok">确定</button>
+                            <button class="confirm-button confirm-dialog-cancel">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            
+            // 显示对话框
+            setTimeout(() => {
+                dialog.classList.add('show');
+            }, 10);
+            
+            // 绑定事件
+            const okButton = dialog.querySelector('.confirm-dialog-ok');
+            const cancelButton = dialog.querySelector('.confirm-dialog-cancel');
+            
+            const closeDialog = () => {
+                dialog.classList.remove('show');
+                setTimeout(() => {
+                    if (dialog.parentNode) {
+                        dialog.parentNode.removeChild(dialog);
+                    }
+                }, 300);
+            };
+            
+            okButton.addEventListener('click', () => {
+                closeDialog();
+                if (onConfirm) onConfirm();
+            });
+            
+            cancelButton.addEventListener('click', () => {
+                closeDialog();
+                if (onCancel) onCancel();
+            });
+            
+            // ESC键关闭
+            const handleKeydown = (e) => {
+                if (e.key === 'Escape') {
+                    closeDialog();
+                    if (onCancel) onCancel();
+                    document.removeEventListener('keydown', handleKeydown);
+                }
+            };
+            
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        // 删除会话
+        function deleteSession(sessionId) {
+            showConfirmDialog('确定要删除这个会话吗？此操作将删除该会话的所有记录且无法恢复！', () => {
+                vscode.postMessage({
+                    type: 'deleteSession',
+                    sessionId: sessionId
+                });
+                
+                // 从当前会话列表中移除
+                currentSessions = currentSessions.filter(session => session.sessionId !== sessionId);
+                
+                // 如果删除的是当前选中的会话，清空记录面板
+                if (currentSessionId === sessionId) {
+                    currentSessionId = null;
+                    currentSessionDetail = null;
+                    currentRecords = [];
+                    recordsList.innerHTML = '';
+                    detailPanel.style.display = 'none';
+                    sessionActions.style.display = 'none';
+                    noRecords.style.display = 'block';
+                }
+                
+                // 重新显示会话列表
+                displaySessionGroups(currentSessions);
+                
+                showNotification('会话删除成功');
+            });
+        }
+
+        // 重置数据
+        function resetData() {
+            showConfirmDialog('确定要重置所有对话记录数据吗？此操作将删除所有记录且无法恢复！', () => {
+                vscode.postMessage({
+                    type: 'resetData'
+                });
+                
+                // 清空当前界面
+                currentRecords = [];
+                currentSessions = [];
+                selectedRecord = null;
+                currentSessionId = null;
+                currentSessionDetail = null;
+                
+                // 更新界面显示
+                sessionsList.innerHTML = '';
+                recordsList.innerHTML = '';
+                detailPanel.style.display = 'none';
+                sessionActions.style.display = 'none';
+                noSessions.style.display = 'block';
+                noRecords.style.display = 'block';
+                
+                // 更新统计信息
+                totalRecords.textContent = '0';
+                todayRecords.textContent = '0';
+                sessionCount.textContent = '0';
+                
+                showNotification('数据重置成功，所有记录已删除');
             });
         }
 

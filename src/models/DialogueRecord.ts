@@ -4,12 +4,7 @@ export interface DialogueRecord {
     timestamp: Date;
     speaker: 'USER' | 'BUILDER' | 'CHAT';
     content: string;
-    recordType: 'DIALOGUE' | 'FILE_MODIFICATION' | 'UNDO' | 'REDO';
-    filePath?: string;
-    modificationType?: 'CREATE' | 'MODIFY' | 'DELETE' | 'RENAME';
-    oldContent?: string;
-    newContent?: string;
-    operationDetails?: string;
+    recordType: 'DIALOGUE';
 }
 
 export interface SearchCriteria {
@@ -17,12 +12,32 @@ export interface SearchCriteria {
     startTime?: Date;
     endTime?: Date;
     speaker?: 'USER' | 'BUILDER' | 'CHAT';
-    recordType?: 'DIALOGUE' | 'FILE_MODIFICATION' | 'UNDO' | 'REDO';
-    fileExtension?: string;
+    recordType?: 'DIALOGUE';
 }
 
 export interface SearchResult {
     record: DialogueRecord;
     relevance: number;
-    highlights: string[];
+    matchedFields: string[];
+}
+
+export interface SessionGroup {
+    sessionId: string;
+    sessionName: string;
+    recordCount: number;
+    firstTimestamp: string;
+    lastTimestamp: string;
+    speakers: string[];
+    isExpanded: boolean;
+}
+
+export interface SessionDetail {
+    sessionId: string;
+    sessionName: string;
+    records: DialogueRecord[];
+    totalRecords: number;
+    duration: string;
+    speakers: string[];
+    startTime: string;
+    endTime: string;
 }

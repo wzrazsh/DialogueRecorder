@@ -25,10 +25,6 @@ export class SearchService {
                 if (criteria.recordType && record.recordType !== criteria.recordType) {
                     return false;
                 }
-                if (criteria.fileExtension && record.filePath && 
-                    !record.filePath.endsWith(criteria.fileExtension)) {
-                    return false;
-                }
                 return true;
             });
 
@@ -36,7 +32,8 @@ export class SearchService {
             const searchResults: SearchResult[] = filteredRecords.map(record => ({
                 record,
                 relevance: this.calculateRelevance(record, criteria.keyword || ''),
-                highlights: this.extractHighlights(record.content, criteria.keyword || '')
+                highlights: this.extractHighlights(record.content, criteria.keyword || ''),
+                matchedFields: criteria.keyword ? ['content'] : []
             }));
 
             // 按相关性排序
@@ -98,9 +95,7 @@ export class SearchService {
         return this.search({ speaker });
     }
 
-    async searchByFileExtension(extension: string): Promise<SearchResult[]> {
-        return this.search({ fileExtension: extension });
-    }
+
 
     async advancedSearch(criteria: SearchCriteria): Promise<SearchResult[]> {
         // 实现高级搜索逻辑
@@ -112,9 +107,6 @@ export class SearchService {
         // 模拟搜索建议
         const suggestions = [
             '对话',
-            '文件修改',
-            '撤销操作',
-            '重做操作',
             'Builder',
             'Chat'
         ];
@@ -127,12 +119,12 @@ export class SearchService {
     // 搜索历史功能
     async getSearchHistory(): Promise<string[]> {
         // 模拟搜索历史
-        return ['对话记录', '文件修改', '撤销操作'];
+        return ['对话记录', 'Builder', 'Chat'];
     }
 
     // 热门搜索功能
     async getPopularSearches(): Promise<string[]> {
         // 模拟热门搜索
-        return ['对话', '文件', '操作历史'];
+        return ['对话', 'Builder', 'Chat'];
     }
 }

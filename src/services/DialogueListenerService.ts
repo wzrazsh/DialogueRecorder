@@ -80,34 +80,108 @@ export class DialogueListenerService {
     }
 
     private analyzeOutputLine(line: string): void {
-        // 识别Builder输出模式
-        if (line.includes('[Builder]') || line.includes('Builder:')) {
+        // 过滤掉终端交互和系统消息
+        if (this.isTerminalOrSystemMessage(line)) {
+            return;
+        }
+        
+        // 识别Builder输出模式 - 更精确的匹配
+        if (line.match(/\[Builder\]|^Builder:/)) {
             const content = this.extractContent(line, ['[Builder]', 'Builder:']);
-            if (content) {
+            if (content && this.isRealChatContent(content)) {
                 this.recordDialogue('BUILDER', content);
             }
         }
-        // 识别Chat输出模式
-        else if (line.includes('[Chat]') || line.includes('Chat:') || line.includes('Assistant:')) {
+        // 识别Chat输出模式 - 更精确的匹配
+        else if (line.match(/\[Chat\]|^Chat:|^Assistant:/)) {
             const content = this.extractContent(line, ['[Chat]', 'Chat:', 'Assistant:']);
-            if (content) {
+            if (content && this.isRealChatContent(content)) {
                 this.recordDialogue('CHAT', content);
             }
         }
-        // 识别用户输入模式
-        else if (line.includes('[User]') || line.includes('User:') || line.includes('USER:')) {
+        // 识别用户输入模式 - 更精确的匹配
+        else if (line.match(/\[User\]|^User:|^USER:/)) {
             const content = this.extractContent(line, ['[User]', 'User:', 'USER:']);
-            if (content) {
+            if (content && this.isRealChatContent(content)) {
                 this.recordDialogue('USER', content);
             }
         }
-        // 识别工具调用模式
-        else if (line.includes('tool_call') || line.includes('Tool:')) {
-            const content = this.extractContent(line, ['tool_call', 'Tool:']);
-            if (content) {
-                this.recordDialogue('BUILDER', `工具调用: ${content}`);
+        // 识别真正的对话内容（不包含标记的纯对话）
+        else if (this.isPureDialogueContent(line)) {
+            // 根据上下文判断发言者
+            const speaker = this.determineSpeakerFromContext(line);
+            if (speaker && this.isRealChatContent(line)) {
+                this.recordDialogue(speaker, line);
             }
         }
+    }
+
+    private isTerminalOrSystemMessage(line: string): boolean {
+        // 过滤终端相关的消息
+        const terminalKeywords = [
+            '终端', 'terminal', '命令', 'command', 'npm', 'git', 'cd', 'ls', 'dir',
+            '编译', 'compile', '构建', 'build', '运行', 'run', '执行', 'execute',
+            '错误', 'error', '警告', 'warning', '信息', 'info', '调试', 'debug',
+            '断点', 'breakpoint', '工具调用', 'tool_call', 'Tool:', '工具:',
+            '创建', 'create', '关闭', 'close', '开始', 'start', '结束', 'end'
+        ];
+        
+        return terminalKeywords.some(keyword => 
+            line.toLowerCase().includes(keyword.toLowerCase())
+        );
+    }
+
+    private isRealChatContent(content: string): boolean {
+        // 检查内容是否是真正的聊天内容
+        const minLength = 10; // 最小长度要求
+        const maxLength = 5000; // 最大长度限制
+        
+        if (content.length < minLength || content.length > maxLength) {
+            return false;
+        }
+        
+        // 过滤掉系统消息和命令输出
+        const systemPatterns = [
+            /^\s*\d+\s*$/, // 纯数字
+            /^[\s\-\*]+$/, // 只有符号
+            /^(OK|成功|失败|错误|完成|开始|结束)$/i, // 简单状态词
+            /^执行命令:/, // 命令执行
+            /^工具调用:/, // 工具调用
+            /^终端已/, // 终端状态
+            /^调试会话/ // 调试会话
+        ];
+        
+        return !systemPatterns.some(pattern => pattern.test(content));
+    }
+
+    private isPureDialogueContent(line: string): boolean {
+        // 检查是否是纯对话内容（不包含任何标记）
+        const dialogueIndicators = [
+            '你好', '请问', '谢谢', '帮助', '问题', '回答', '解释', '说明',
+            '如何', '什么', '为什么', '怎样', '可以', '需要', '想要', '希望',
+            '我觉得', '我认为', '建议', '推荐', '示例', '代码', '实现',
+            '功能', '特性', '需求', '要求', '任务', '目标', '目的'
+        ];
+        
+        return dialogueIndicators.some(indicator => 
+            line.includes(indicator)
+        ) && line.length > 20; // 确保有足够的内容
+    }
+
+    private determineSpeakerFromContext(line: string): 'USER' | 'BUILDER' | 'CHAT' | null {
+        // 根据内容特征判断发言者
+        if (line.includes('?') || line.includes('？') || 
+            line.includes('请问') || line.includes('如何') || 
+            line.includes('什么') || line.includes('为什么')) {
+            return 'USER';
+        } else if (line.includes('代码') || line.includes('实现') || 
+                   line.includes('功能') || line.includes('工具')) {
+            return 'BUILDER';
+        } else if (line.length > 100) { // 较长的回答通常是Chat
+            return 'CHAT';
+        }
+        
+        return null;
     }
 
     private extractContent(line: string, markers: string[]): string | null {
@@ -222,87 +296,6 @@ export class DialogueListenerService {
             console.log(`记录对话: ${speaker} - ${content.substring(0, 50)}...`);
         } catch (error) {
             console.error('记录对话失败:', error);
-        }
-    }
-
-    async recordFileModification(filePath: string, modificationType: 'CREATE' | 'MODIFY' | 'DELETE' | 'RENAME'): Promise<void> {
-        const record: DialogueRecord = {
-            id: this.generateRecordId(),
-            sessionId: this.currentSessionId,
-            timestamp: new Date(),
-            speaker: 'BUILDER',
-            content: `文件${modificationType}: ${filePath}`,
-            recordType: 'FILE_MODIFICATION',
-            filePath: filePath,
-            modificationType: modificationType
-        };
-
-        try {
-            await this.databaseService.saveRecord(record);
-            console.log(`记录文件修改: ${modificationType} - ${filePath}`);
-        } catch (error) {
-            console.error('记录文件修改失败:', error);
-        }
-    }
-
-    async recordFileContentModification(filePath: string, content: string): Promise<void> {
-        const record: DialogueRecord = {
-            id: this.generateRecordId(),
-            sessionId: this.currentSessionId,
-            timestamp: new Date(),
-            speaker: 'BUILDER',
-            content: `文件内容修改: ${filePath}`,
-            recordType: 'FILE_MODIFICATION',
-            filePath: filePath,
-            modificationType: 'MODIFY',
-            newContent: content
-        };
-
-        try {
-            await this.databaseService.saveRecord(record);
-            console.log(`记录文件内容修改: ${filePath}`);
-        } catch (error) {
-            console.error('记录文件内容修改失败:', error);
-        }
-    }
-
-    async recordUndoOperation(filePath: string, operationDetails: string): Promise<void> {
-        const record: DialogueRecord = {
-            id: this.generateRecordId(),
-            sessionId: this.currentSessionId,
-            timestamp: new Date(),
-            speaker: 'USER',
-            content: `撤销操作: ${operationDetails}`,
-            recordType: 'UNDO',
-            filePath: filePath,
-            operationDetails: operationDetails
-        };
-
-        try {
-            await this.databaseService.saveRecord(record);
-            console.log(`记录撤销操作: ${operationDetails}`);
-        } catch (error) {
-            console.error('记录撤销操作失败:', error);
-        }
-    }
-
-    async recordRedoOperation(filePath: string, operationDetails: string): Promise<void> {
-        const record: DialogueRecord = {
-            id: this.generateRecordId(),
-            sessionId: this.currentSessionId,
-            timestamp: new Date(),
-            speaker: 'USER',
-            content: `重做操作: ${operationDetails}`,
-            recordType: 'REDO',
-            filePath: filePath,
-            operationDetails: operationDetails
-        };
-
-        try {
-            await this.databaseService.saveRecord(record);
-            console.log(`记录重做操作: ${operationDetails}`);
-        } catch (error) {
-            console.error('记录重做操作失败:', error);
         }
     }
 

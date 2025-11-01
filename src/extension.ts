@@ -36,50 +36,13 @@ export function activate(context: vscode.ExtensionContext) {
         });
     });
 
-    // 监听文件修改事件
-    const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*');
-    fileWatcher.onDidChange(uri => {
-        dialogueListenerService.recordFileModification(uri.fsPath, 'MODIFY');
-    });
-    fileWatcher.onDidCreate(uri => {
-        dialogueListenerService.recordFileModification(uri.fsPath, 'CREATE');
-    });
-    fileWatcher.onDidDelete(uri => {
-        dialogueListenerService.recordFileModification(uri.fsPath, 'DELETE');
-    });
-
-    // 监听文本编辑器变化
-    vscode.workspace.onDidChangeTextDocument(event => {
-        if (event.contentChanges.length > 0) {
-            const filePath = event.document.uri.fsPath;
-            const content = event.contentChanges[0].text;
-            dialogueListenerService.recordFileContentModification(filePath, content);
-        }
-    });
-
-    // 监听撤销操作
-    vscode.commands.registerCommand('undo', () => {
-        const activeEditor = vscode.window.activeTextEditor;
-        if (activeEditor) {
-            const filePath = activeEditor.document.uri.fsPath;
-            dialogueListenerService.recordUndoOperation(filePath, '撤销文本编辑操作');
-        }
-    });
-
-    // 监听重做操作
-    vscode.commands.registerCommand('redo', () => {
-        const activeEditor = vscode.window.activeTextEditor;
-        if (activeEditor) {
-            const filePath = activeEditor.document.uri.fsPath;
-            dialogueListenerService.recordRedoOperation(filePath, '重做文本编辑操作');
-        }
-    });
+    // 监听对话内容（不再监听文件修改事件）
+    // 文件修改、撤销、重做等操作不再被记录
 
     // 将命令和监听器添加到上下文
     context.subscriptions.push(
         showPanelCommand,
         quickSearchCommand,
-        fileWatcher,
         dialogueListenerService
     );
 

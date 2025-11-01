@@ -212,12 +212,7 @@ suite('DialogueRecorder 综合测试套件', () => {
                 timestamp: new Date(),
                 speaker: 'BUILDER' as 'BUILDER',
                 content: '复杂记录测试',
-                recordType: 'FILE_MODIFICATION' as 'FILE_MODIFICATION',
-                filePath: '/test/example.js',
-                modificationType: 'MODIFY',
-                oldContent: '旧内容',
-                newContent: '新内容',
-                operationDetails: '详细操作信息'
+                recordType: 'DIALOGUE' as 'DIALOGUE'
             };
 
             await dbService.saveRecord(complexRecord);
@@ -230,12 +225,7 @@ suite('DialogueRecorder 综合测试套件', () => {
             assert.strictEqual(retrievedRecord.sessionId, 'integrity-session', '会话ID应正确保存');
             assert.strictEqual(retrievedRecord.speaker, 'BUILDER', '说话者应正确保存');
             assert.strictEqual(retrievedRecord.content, '复杂记录测试', '内容应正确保存');
-            assert.strictEqual(retrievedRecord.recordType, 'FILE_MODIFICATION', '记录类型应正确保存');
-            assert.strictEqual(retrievedRecord.filePath, '/test/example.js', '文件路径应正确保存');
-            assert.strictEqual(retrievedRecord.modificationType, 'MODIFY', '修改类型应正确保存');
-            assert.strictEqual(retrievedRecord.oldContent, '旧内容', '旧内容应正确保存');
-            assert.strictEqual(retrievedRecord.newContent, '新内容', '新内容应正确保存');
-            assert.strictEqual(retrievedRecord.operationDetails, '详细操作信息', '操作详情应正确保存');
+            assert.strictEqual(retrievedRecord.recordType, 'DIALOGUE', '记录类型应正确保存');
         });
 
         test('并发操作测试', async () => {
@@ -316,65 +306,7 @@ suite('DialogueRecorder 综合测试套件', () => {
             assert.strictEqual(session2RecordsFromDb.length, 2, '会话2应有2条记录');
         });
 
-        test('撤销操作记录测试', async () => {
-            const filePath = '/test/example.js';
-            const operationDetails = '撤销了文件修改操作';
 
-            await listenerService.recordUndoOperation(filePath, operationDetails);
-
-            const sessions = await dbService.getAllSessions();
-            const records = await dbService.getRecordsBySession(sessions[0]);
-            
-            const undoRecord = records.find(r => r.recordType === 'UNDO');
-            assert.ok(undoRecord, '应找到撤销操作记录');
-            assert.strictEqual(undoRecord?.speaker, 'USER', '撤销操作记录者应为USER');
-            assert.strictEqual(undoRecord?.filePath, filePath, '文件路径应正确记录');
-            assert.strictEqual(undoRecord?.operationDetails, operationDetails, '操作详情应正确记录');
-        });
-
-        test('重做操作记录测试', async () => {
-            const filePath = '/test/example.js';
-            const operationDetails = '重做了文件修改操作';
-
-            await listenerService.recordRedoOperation(filePath, operationDetails);
-
-            const sessions = await dbService.getAllSessions();
-            const records = await dbService.getRecordsBySession(sessions[0]);
-            
-            const redoRecord = records.find(r => r.recordType === 'REDO');
-            assert.ok(redoRecord, '应找到重做操作记录');
-            assert.strictEqual(redoRecord?.speaker, 'USER', '重做操作记录者应为USER');
-            assert.strictEqual(redoRecord?.filePath, filePath, '文件路径应正确记录');
-            assert.strictEqual(redoRecord?.operationDetails, operationDetails, '操作详情应正确记录');
-        });
-
-        test('文件修改操作记录测试', async () => {
-            const testCases = [
-                { type: 'CREATE', filePath: '/test/newfile.js', expectedContent: '文件CREATE: /test/newfile.js' },
-                { type: 'MODIFY', filePath: '/test/modified.js', expectedContent: '文件MODIFY: /test/modified.js' },
-                { type: 'DELETE', filePath: '/test/deleted.js', expectedContent: '文件DELETE: /test/deleted.js' },
-                { type: 'RENAME', filePath: '/test/renamed.js', expectedContent: '文件RENAME: /test/renamed.js' }
-            ];
-
-            for (const testCase of testCases) {
-                await listenerService.recordFileModification(
-                    testCase.filePath, 
-                    testCase.type as any
-                );
-            }
-
-            const sessions = await dbService.getAllSessions();
-            const records = await dbService.getRecordsBySession(sessions[0]);
-            
-            const fileModRecords = records.filter(r => r.recordType === 'FILE_MODIFICATION');
-            assert.strictEqual(fileModRecords.length, 4, '应有4条文件修改记录');
-
-            testCases.forEach((testCase, index) => {
-                const record = fileModRecords[index];
-                assert.strictEqual(record.modificationType, testCase.type, '修改类型应正确记录');
-                assert.strictEqual(record.filePath, testCase.filePath, '文件路径应正确记录');
-            });
-        });
 
         test('监听服务启动停止测试', () => {
             // 测试监听服务的启动和停止功能
@@ -407,16 +339,7 @@ suite('DialogueRecorder 综合测试套件', () => {
                     content: '搜索功能测试Builder响应',
                     recordType: 'DIALOGUE' as 'DIALOGUE'
                 },
-                {
-                    id: 'search-test-3',
-                    sessionId: 'search-session',
-                    timestamp: new Date(),
-                    speaker: 'CHAT' as 'CHAT',
-                    content: '文件修改操作记录',
-                    recordType: 'FILE_MODIFICATION' as 'FILE_MODIFICATION',
-                    filePath: '/test/example.js',
-                    modificationType: 'MODIFY' as 'MODIFY'
-                }
+
             ];
 
             for (const record of testRecords) {
@@ -457,10 +380,8 @@ suite('DialogueRecorder 综合测试套件', () => {
         test('记录类型查询测试', async () => {
             const allRecords = await dbService.getRecordsBySession('search-session');
             const dialogueRecords = allRecords.filter(r => r.recordType === 'DIALOGUE');
-            const fileModRecords = allRecords.filter(r => r.recordType === 'FILE_MODIFICATION');
             
             assert.strictEqual(dialogueRecords.length, 2, '应有2条对话记录');
-            assert.strictEqual(fileModRecords.length, 1, '应有1条文件修改记录');
         });
 
         test('查询响应速度测试', async () => {
@@ -473,13 +394,12 @@ suite('DialogueRecorder 综合测试套件', () => {
         });
 
         test('数据完整性验证查询', async () => {
-            const results = await dbService.searchRecords('文件修改');
-            assert.strictEqual(results.length, 1, '应找到文件修改记录');
+            const results = await dbService.searchRecords('搜索功能');
+            assert.strictEqual(results.length, 2, '应找到包含搜索功能的记录');
             
             const record = results[0];
-            assert.strictEqual(record.recordType, 'FILE_MODIFICATION', '记录类型应正确');
-            assert.strictEqual(record.filePath, '/test/example.js', '文件路径应完整');
-            assert.strictEqual(record.modificationType, 'MODIFY', '修改类型应正确');
+            assert.strictEqual(record.recordType, 'DIALOGUE', '记录类型应正确');
+            assert.ok(record.content.includes('搜索功能'), '内容应包含搜索关键词');
         });
 
         test('空查询结果处理测试', async () => {
@@ -514,31 +434,19 @@ suite('DialogueRecorder 综合测试套件', () => {
             // 2. Builder响应
             await listenerService.recordDialogue('BUILDER', '好的，我来帮您创建项目');
             
-            // 3. 文件创建操作
-            await listenerService.recordFileModification('/new-project/package.json', 'CREATE');
-            
-            // 4. 用户撤销操作
-            await listenerService.recordUndoOperation('/new-project/package.json', '撤销了文件创建');
-            
-            // 5. 用户重做操作
-            await listenerService.recordRedoOperation('/new-project/package.json', '重做了文件创建');
-            
-            // 6. Chat参与对话
+            // 3. Chat参与对话
             await listenerService.recordDialogue('CHAT', '项目创建完成，需要进一步配置吗？');
 
             // 验证完整工作流记录
             const sessions = await dbService.getAllSessions();
             const records = await dbService.getRecordsBySession(sessions[0]);
             
-            assert.strictEqual(records.length, 6, '完整工作流应有6条记录');
+            assert.strictEqual(records.length, 3, '完整工作流应有3条记录');
             
             // 验证记录顺序和类型
             assert.strictEqual(records[0].recordType, 'DIALOGUE', '第一条应为对话记录');
             assert.strictEqual(records[1].recordType, 'DIALOGUE', '第二条应为对话记录');
-            assert.strictEqual(records[2].recordType, 'FILE_MODIFICATION', '第三条应为文件修改记录');
-            assert.strictEqual(records[3].recordType, 'UNDO', '第四条应为撤销记录');
-            assert.strictEqual(records[4].recordType, 'REDO', '第五条应为重做记录');
-            assert.strictEqual(records[5].recordType, 'DIALOGUE', '第六条应为对话记录');
+            assert.strictEqual(records[2].recordType, 'DIALOGUE', '第三条应为对话记录');
         });
 
         test('性能压力测试', async () => {

@@ -80,12 +80,7 @@ suite('DatabaseService Test Suite', () => {
 			timestamp: new Date(),
 			speaker: 'USER',
 			content: 'This is a test message',
-			recordType: 'DIALOGUE',
-			filePath: undefined,
-			modificationType: undefined,
-			oldContent: undefined,
-			newContent: undefined,
-			operationDetails: undefined
+			recordType: 'DIALOGUE'
 		};
 
 		await dbService.saveRecord(testRecord);
@@ -103,12 +98,7 @@ suite('DatabaseService Test Suite', () => {
 			timestamp: new Date(),
 			speaker: 'USER',
 			content: 'Search test message',
-			recordType: 'DIALOGUE',
-			filePath: undefined,
-			modificationType: undefined,
-			oldContent: undefined,
-			newContent: undefined,
-			operationDetails: undefined
+			recordType: 'DIALOGUE'
 		};
 
 		await dbService.saveRecord(testRecord);
@@ -196,26 +186,22 @@ suite('DatabaseService Test Suite', () => {
 			recordType: 'DIALOGUE'
 		};
 
-		const fileModRecord: DialogueRecord = {
-			id: 'filemod-test',
+		const dialogueRecord2: DialogueRecord = {
+			id: 'dialogue-test-2',
 			sessionId: 'type-test',
 			timestamp: new Date(),
 			speaker: 'BUILDER',
-			content: 'File modification',
-			recordType: 'FILE_MODIFICATION',
-			filePath: '/test/file.js',
-			modificationType: 'MODIFY'
+			content: 'Another dialogue message',
+			recordType: 'DIALOGUE'
 		};
 
 		await dbService.saveRecord(dialogueRecord);
-		await dbService.saveRecord(fileModRecord);
+		await dbService.saveRecord(dialogueRecord2);
 
 		const allRecords = await dbService.getRecordsBySession('type-test');
 		const dialogueRecords = allRecords.filter(r => r.recordType === 'DIALOGUE');
-		const fileModRecords = allRecords.filter(r => r.recordType === 'FILE_MODIFICATION');
 
-		assert.strictEqual(dialogueRecords.length, 1, 'Should have 1 dialogue record');
-		assert.strictEqual(fileModRecords.length, 1, 'Should have 1 file modification record');
+		assert.strictEqual(dialogueRecords.length, 2, 'Should have 2 dialogue records');
 	});
 
 	test('Get all sessions', async () => {

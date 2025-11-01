@@ -76,6 +76,10 @@ export class DialogueRecorderPanel {
                         console.log('DialogueRecorderPanel: 处理loadRecords命令');
                         await this.loadRecords();
                         break;
+                    case 'loadSessionRecords':
+                        console.log('DialogueRecorderPanel: 处理loadSessionRecords命令，会话ID:', data.sessionId);
+                        await this.loadSessionRecords(data.sessionId);
+                        break;
                     case 'search':
                         console.log('DialogueRecorderPanel: 处理search命令，查询:', data);
                         await this.performSearch(data);
@@ -101,40 +105,20 @@ export class DialogueRecorderPanel {
 
     private async loadRecords() {
         console.log('开始加载对话记录...');
-        //查看node版本
-        console.log('Node版本:', process.version);
         try {
-            console.log('正在获取所有会话列表...');
-            const sessions = await this._databaseService.getAllSessions();
-            console.log(`获取到 ${sessions.length} 个会话`);
-            
-            let allRecords: DialogueRecord[] = [];
+            console.log('正在获取会话分组...');
+            const sessionGroups = await this._databaseService.getSessionGroups();
+            console.log(`获取到 ${sessionGroups.length} 个会话分组`);
 
-            // 获取每个会话的记录
-            for (let i = 0; i < sessions.length; i++) {
-                const sessionId = sessions[i];
-                console.log(`正在加载会话 ${i + 1}/${sessions.length}: ${sessionId}`);
-                
-                const records = await this._databaseService.getRecordsBySession(sessionId);
-                console.log(`会话 ${sessionId} 包含 ${records.length} 条记录`);
-                allRecords = allRecords.concat(records);
-            }
-
-            console.log(`总共获取到 ${allRecords.length} 条记录`);
-
-            // 按时间排序
-            allRecords.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            console.log('记录排序完成');
-
-            // 发送记录到webview
+            // 发送会话分组到webview
             this._panel.webview.postMessage({
-                type: 'recordsLoaded',
-                records: allRecords
+                type: 'sessionGroupsLoaded',
+                sessionGroups: sessionGroups
             });
-            console.log('记录已发送到Webview');
+            console.log('会话分组已发送到Webview');
             
         } catch (error) {
-            console.error('加载记录失败:', error);
+            console.error('加载会话分组失败:', error);
             if (error instanceof Error) {
                 console.error('错误详情:', error.message);
                 console.error('错误堆栈:', error.stack);
@@ -142,7 +126,34 @@ export class DialogueRecorderPanel {
             
             this._panel.webview.postMessage({
                 type: 'error',
-                text: '加载记录失败'
+                text: '加载会话分组失败'
+            });
+        }
+    }
+
+    private async loadSessionRecords(sessionId: string) {
+        console.log(`开始加载会话记录: ${sessionId}`);
+        try {
+            const sessionDetail = await this._databaseService.getSessionDetail(sessionId);
+            console.log(`会话 ${sessionId} 包含 ${sessionDetail.records.length} 条记录`);
+
+            // 发送会话记录到webview
+            this._panel.webview.postMessage({
+                type: 'sessionRecordsLoaded',
+                sessionDetail: sessionDetail
+            });
+            console.log('会话记录已发送到Webview');
+            
+        } catch (error) {
+            console.error('加载会话记录失败:', error);
+            if (error instanceof Error) {
+                console.error('错误详情:', error.message);
+                console.error('错误堆栈:', error.stack);
+            }
+            
+            this._panel.webview.postMessage({
+                type: 'error',
+                text: '加载会话记录失败'
             });
         }
     }
@@ -154,8 +165,7 @@ export class DialogueRecorderPanel {
                 speaker: data.speaker,
                 recordType: data.recordType,
                 startTime: data.startTime ? new Date(data.startTime) : undefined,
-                endTime: data.endTime ? new Date(data.endTime) : undefined,
-                fileExtension: data.fileExtension
+                endTime: data.endTime ? new Date(data.endTime) : undefined
             };
 
             // 使用搜索服务进行搜索
@@ -207,12 +217,7 @@ export class DialogueRecorderPanel {
                     timestamp: record.timestamp,
                     recordType: record.recordType,
                     speaker: record.speaker,
-                    content: record.content,
-                    filePath: record.filePath,
-                    modificationType: record.modificationType,
-                    oldContent: record.oldContent,
-                    newContent: record.newContent,
-                    operationDetails: record.operationDetails
+                    content: record.content
                 }))
             };
 

@@ -24,6 +24,7 @@ build/
 
 # History files
 .history/
+.out/
 
 # OS generated files
 .DS_Store
